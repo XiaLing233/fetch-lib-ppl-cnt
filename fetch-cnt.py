@@ -24,6 +24,11 @@ TABLE_NAME = config['table']['name']
 TARGET_DIV_CLASS = config['network']['target-class']
 LIB_CLOSED = config['network']['lib-closed']
 
+LIB_NAME = config['table']['lib-name']
+LIB_PPL_CUR = config['table']['lib-ppl-cur']
+LIB_PPL_MAX = config['table']['lib-ppl-max']
+TIMESTAMP = config['table']['timestamp']
+
 # 数据库配置
 DB_CONFIG = {
     'host': DB_HOST,
@@ -103,7 +108,7 @@ def parse_data(html):
 # 存储数据
 def store_data(lib_data):
     # 连接数据库
-    db = mysql.connector.connect(DB_CONFIG)
+    db = mysql.connector.connect(**DB_CONFIG)
     cursor = db.cursor()
 
     # 获取当前时间
@@ -115,8 +120,8 @@ def store_data(lib_data):
         ppl_cnt = data['ppl_cnt']
         max_cnt = data['max_cnt']
 
-        # 插入数据
-        sql = f"INSERT INTO {TABLE_NAME} (lib_name, ppl_cnt, max_cnt, time) VALUES (%s, %s, %s ,%s)"
+        # 插入数据（不包含自增ID）
+        sql = f"INSERT INTO {TABLE_NAME} ({LIB_NAME}, {LIB_PPL_CUR}, {LIB_PPL_MAX}, {TIMESTAMP}) VALUES (%s, %s, %s, %s)"
         cursor.execute(sql, (lib_name, ppl_cnt, max_cnt, now))
 
     # 提交数据
@@ -142,7 +147,7 @@ def main():
         # 调试
         print(lib_data)
 
-        # store_data(lib_data)
+        store_data(lib_data)
 
     else:
         print("request failed")
