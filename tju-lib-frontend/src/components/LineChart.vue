@@ -1,8 +1,9 @@
 <template>
-  <Line
+    <Line
+    ref="chart"
     :data="chartData"
     :options="chartOptions"
-  />
+    />
 </template>
   
   <script>
@@ -15,7 +16,8 @@
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+//   Filler
 } from 'chart.js'
   
 ChartJS.register(
@@ -25,7 +27,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+//   Filler
 )
   
   export default {
@@ -34,28 +37,25 @@ ChartJS.register(
     props: {
         chartData: {
             type: Object,
-            required: true,
+            required: true
         },
         chartOptions: {
             type: Object,
-            default: null,
-        },
+            maintainAspectRatio: false,  // 禁用保持宽高比，允许自适应
+            responsive: true, // 得有这句，不然不会自适应
+        }
     },
     watch: {
     // 监听 chartData 或 chartOptions 的变化，并手动触发更新
     chartData(newValue, oldValue) {
-        console.log("hi")
-        console.log(newValue, oldValue)
-      if (newValue !== oldValue) {
-        console.log('chartData changed')
+      if (newValue !== oldValue && this.$refs.chart) {
         this.$nextTick(() => {
           this.$refs.chart.$chart.update()
         })
       }
     },
     chartOptions(newValue, oldValue) {
-      if (newValue !== oldValue) {
-        console.log('chartOptions changed')
+      if (newValue !== oldValue && this.$refs.chart) {
         this.$nextTick(() => {
           this.$refs.chart.$chart.update()
         })

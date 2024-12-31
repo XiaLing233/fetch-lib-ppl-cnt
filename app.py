@@ -59,6 +59,7 @@ DB_CONFIG = {
             "time": "某一天的时间" # 形如 "10:23"
         }
     ]
+    lib_ppl_max: "最大人数"
 }
 '''
 @app.route('/api/get-lib-ppl', methods=['POST'])
@@ -77,7 +78,7 @@ def get_lib_ppl():
     
     # 查询数据库
     try:
-        query = f"SELECT {LIB_PPL_CUR}, {TIMESTAMP} FROM {TABLE_NAME} WHERE {LIB_NAME} = '{lib_name}' AND DATE({TIMESTAMP}) = '{timestamp}'"
+        query = f"SELECT {LIB_PPL_CUR}, {TIMESTAMP}, {LIB_PPL_MAX} FROM {TABLE_NAME} WHERE {LIB_NAME} = '{lib_name}' AND DATE({TIMESTAMP}) = '{timestamp}'"
         cursor.execute(query)
         print(query)
     except Exception as e:
@@ -107,6 +108,9 @@ def get_lib_ppl():
             TIMESTAMP: str(row[1])[11:19]  # 只取时间部分
         })
 
+    # 获取最大人数
+    lib_ppl_max = result[0][2]
+
     # 关闭数据库连接
     cursor.close()
     conn.close()
@@ -115,5 +119,6 @@ def get_lib_ppl():
     return jsonify({
         'status': 'ok',
         'msg': '查询成功',
-        'data': data
+        'data': data,
+        'lib_ppl_max': lib_ppl_max
     }), 200

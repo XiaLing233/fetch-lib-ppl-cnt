@@ -6,6 +6,7 @@
                 <a-select
                     v-model:value="selectedLibrary"
                     style="width: 200px"
+                    @change="fetchData"
                 >
                     <a-select-option
                         v-for="library in libraries"
@@ -19,21 +20,23 @@
                 <div :style="{ width: '300px', border: '1px solid #d9d9d9', borderRadius: '4px' }">
                     <a-calendar :value="selectedDate" :fullscreen="false" @select="onSelect" @panelChange="onPanelChange"/>
                 </div>
-                <a-button type="primary" style="margin-top: 16px" @click="fetchData">查询</a-button>
+                <!-- <a-button type="primary" style="margin-top: 16px" @click="fetchData">查询</a-button> -->
             </a-card>
         
             <a-card title="结果">
-                <p>图书馆：{{ selectedLibrary }}</p>
-                <p>日期：{{ selectedDate.format('YYYY-MM-DD') }}</p>
-
+                <h3>图书馆：{{ selectedLibrary }}</h3>
+                <h3>日期：{{ selectedDate.format('YYYY-MM-DD') }}</h3>
+            <a-card :loading="isLoading">
                 <!--采用 Chartjs 的折线图展示 data 的数据-->
-                <div v-if = "data.labels.length > 0">
+                <div v-if = "data.labels.length > 0" style="height: 50vh; display: flex; justify-content: center; align-items: center;">
                     <!-- <div>{{ data }}</div> -->
                     <LineChart :chartData="data" />
                 </div>
-                <div v-else>
-                    <p>暂无数据</p>
+                <div v-else style="text-align: center; padding: 20px;">
+                    <h2>暂无数据</h2>
                 </div>
+            </a-card>
+                
             </a-card>
         </div>
     </a-config-provider>
@@ -61,13 +64,18 @@ export default {
 
             selectedLibrary: '嘉定校区图书馆', // 默认选嘉图，为我所用
             selectedDate: dayjs(), // 默认选今天
+            libPplMax: 0,
             data: {
                 labels: [],
                 datasets: [
                     {
                         label: '当前人数',
                         // skyblue
-                        backgroundColor: 'rgba(2, 159, 253, 0.4)',
+                        backgroundColor: 'rgba(2, 159, 253, 0.0)',
+                        borderColor: 'rgba(2, 159, 253, 1)', // 默认是啥都无所谓
+                        fill: true, // 是否填充区域
+                        pointStyle: false, // 设置为 false，隐藏散点
+                        tension: 0.4, // 线条的平滑度
                         data: [],
                     },
                 ],
@@ -79,6 +87,7 @@ export default {
         onSelect(date) {
             this.selectedDate = date;
             console.log(this.selectedDate);
+            this.fetchData();
         },
         onPanelChange(date) {
             this.selectedDate = date;
@@ -103,6 +112,7 @@ export default {
                     "time": "某一天的时间" # 形如 "10:23"
                 }
             ]
+            lib_ppl_max: "最大人数"
         }
         */
         fetchData() {
@@ -112,7 +122,7 @@ export default {
                 timestamp: this.selectedDate.format('YYYY-MM-DD'),
             };
             // console.log(req_data);
-            fetch('http://127.0.0.1:8000/api/get-lib-ppl', {
+            fetch('/api/get-lib-ppl', {
             // fetch('/api/get-lib-ppl', {
                 method: 'POST',
                 headers: {
@@ -124,13 +134,27 @@ export default {
                 .then((data) => {
                     console.log('Success:', data);
                     if (data.status === 'ok') {
+                        this.libPplMax = data.lib_ppl_max;
+                        // console.log(this.libPplMax);
                         this.data = { // 必须整体赋值，否则不会触发更新
                             labels: data.data.map((item) => item.rec_time),
                             datasets: [{
                                 label: '当前人数',
                                 // 天蓝色
-                                backgroundColor: 'rgba(2, 159, 253, 0.4)',
-                                data: data.data.map((item) => item.lib_ppl_cur)
+                                backgroundColor: (context) => {
+                                    const value = context.raw || 0;
+                                    return value < this.libPplMax ? 'rgba(2, 159, 253, 0.4)' : 'rgba(255, 0, 0, 0.4)';
+                                },
+                                segment: {
+                                    borderColor: (context) => {
+                                        const value = context.p1.parsed.y;
+                                        return value < this.libPplMax ? 'rgba(2, 159, 253, 1)' : 'rgba(255, 0, 0, 1)';
+                                    }
+                                },
+                                data: data.data.map((item) => item.lib_ppl_cur),
+                                pointStyle: false, // 设置为 false，隐藏散点
+                                fill: true, // 是否填充区域
+                                tension: 0.4 // 线条的平滑度
                             }]
                         };
                     } else {
@@ -146,6 +170,9 @@ export default {
     },
     components: {
         LineChart,
+    },
+    mounted() {
+        this.fetchData();
     },
 };
 </script>
