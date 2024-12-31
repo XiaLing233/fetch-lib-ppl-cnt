@@ -31,4 +31,30 @@ pip install logging                 # 日志相关
 
 # flask 相关
 pip install flask
+pip install flask-cors # 允许跨域请求
+```
+
+接下来是前端的配置：
+
+```bash
+npm create vue@latest
+# 安装完成后，切换到目录文件，运行：
+npm install
+# 可以通过
+npm run dev
+# 来测试安装状态
+```
+
+使用了 `ant design vue` 模板来开发，更高效：
+
+```bash
+npm install ant-design-vue@4.x --save
+# 使用图标，具体使用哪个图标，需要预先注册：
+npm install --save @ant-design/icons-vue
+```
+
+展示图表，需要用到 `vue-chartjs`
+
+```bash
+npm i vue-chartjs chart.js
 ```

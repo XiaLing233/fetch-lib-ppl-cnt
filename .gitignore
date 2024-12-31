@@ -3,3 +3,4 @@
 .venv/
 logs/
 errors/
+__pycache__/

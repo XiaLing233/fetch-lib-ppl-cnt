@@ -1,8 +1,11 @@
 import configparser
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # 导入 CORS
 import mysql.connector
 
 app = Flask(__name__)
+
+CORS(app) # 允许跨域请求
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read('config.ini')
@@ -58,7 +61,7 @@ DB_CONFIG = {
     ]
 }
 '''
-@app.route('/api/get-lib-ppl')
+@app.route('/api/get-lib-ppl', methods=['POST'])
 def get_lib_ppl():
     # 获取请求数据
     req_data = request.json
@@ -69,16 +72,21 @@ def get_lib_ppl():
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor()
     
+    # 结果数据
+    data = []
+    
     # 查询数据库
     try:
-        query = f"SELECT {LIB_PPL_CUR}, {TIMESTAMP} FROM {TABLE_NAME} WHERE {LIB_NAME} = '{lib_name}' AND {TIMESTAMP} = '{timestamp}'"
+        query = f"SELECT {LIB_PPL_CUR}, {TIMESTAMP} FROM {TABLE_NAME} WHERE {LIB_NAME} = '{lib_name}' AND DATE({TIMESTAMP}) = '{timestamp}'"
         cursor.execute(query)
+        print(query)
     except Exception as e:
         cursor.close()
         conn.close()
         return jsonify({
             'status': 'fail',
-            'msg': '查询失败，数据库错误。\n输入的 SQL 语句为：' + query
+            'msg': '查询失败，数据库错误。\n输入的 SQL 语句为：' + query,
+            'data': data
         }), 400
     # 获取查询结果
     result = cursor.fetchall()
@@ -90,9 +98,9 @@ def get_lib_ppl():
         return jsonify({
             'status': 'ok',
             'msg': '暂无数据',
+            'data': data
         }), 200
-
-    data = []
+    
     for row in result:
         data.append({
             LIB_PPL_CUR: row[0],
