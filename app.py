@@ -56,7 +56,7 @@ DB_CONFIG = {
     data[
         {
             "lib_ppl_cur": "当前人数",
-            "time": "某一天的时间" # 形如 "10:23"
+            "time": "某一天的时间" # 时间戳格式，原样返回 "2024-05-20 12:34:56"
         }
     ]
     lib_ppl_max: "最大人数"
@@ -105,7 +105,7 @@ def get_lib_ppl():
     for row in result:
         data.append({
             LIB_PPL_CUR: row[0],
-            TIMESTAMP: str(row[1])[11:19]  # 只取时间部分
+            TIMESTAMP: str(row[1])
         })
 
     # 获取最大人数
