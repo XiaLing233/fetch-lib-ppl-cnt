@@ -57,4 +57,7 @@ npm install --save @ant-design/icons-vue
 
 ```bash
 npm i vue-chartjs chart.js
+npm install chartjs-adapter-date-fns # 对时间的处理
+npm install date-fns # 一定要记得安装对时间的处理，而且，要在前端的对应位置安装，记得切换到正确的文件夹
+npm install dayjs # 对坐标点日期转换的处理
 ```
