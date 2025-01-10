@@ -3,6 +3,7 @@
 import requests # 发送请求
 from bs4 import BeautifulSoup # 解析 HTML
 import time # 时间相关的处理
+import pytz # 时区
 import mysql.connector # 数据库连接
 import configparser # 读取配置文件
 import logging # 日志
@@ -36,6 +37,8 @@ TIMESTAMP = CONFIG['table']['timestamp']
 INFO_ADDR = CONFIG['log']['info_addr']
 ERROR_ADDR = CONFIG['log']['err_addr']
 ENCODING = CONFIG['log']['encoding']
+
+TZ = pytz.timezone('Asia/Shanghai') # UTC+8 时区
 
 # 数据库配置
 DB_CONFIG = {
@@ -79,8 +82,6 @@ def setup_logger():
     logger.addHandler(daily_handler)
     logger.addHandler(error_handler)
     return logger
-
-LOGGER = setup_logger()
 
 # 向网页发送请求
 def fetch_data():
@@ -145,7 +146,7 @@ def parse_data(html):
     return lib_data
 
 # 存储数据
-def store_data(lib_data):
+def store_data(lib_data, logger=setup_logger()): # 每次都需要重新设置 logger，因为日期可能会变
     # 如果 lib_data 为空，则不存储
     if not lib_data:
         return
@@ -171,11 +172,11 @@ def store_data(lib_data):
     db.commit()
 
     # 记录日志
-    log_msg = ""
+    log_msg = now + '\n' # 记录一下时间，系统时间可能和这个时间有一点点误差
     for data in lib_data:
         log_msg += f"{data['lib_name']}: {data['ppl_cnt']}/{data['max_cnt']}\n"
     log_msg += "\n"
-    LOGGER.info(log_msg)
+    logger.info(log_msg)
 
     # 关闭数据库
     cursor.close()
