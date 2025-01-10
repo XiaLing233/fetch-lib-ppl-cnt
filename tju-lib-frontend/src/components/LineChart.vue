@@ -17,9 +17,17 @@
   Title,
   Tooltip,
   Legend,
-//   Filler
+  TimeScale,
+  Filler
 } from 'chart.js'
-  
+
+// import { zhCN } from 'date-fns/locale' // 添加中文本地化
+import 'chartjs-adapter-date-fns' // 日期格式化
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn';
+
+dayjs.locale('zh-cn');
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,7 +36,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-//   Filler
+  TimeScale,
+  Filler
 )
   
   export default {
@@ -41,12 +50,46 @@ ChartJS.register(
         },
         chartOptions: {
             type: Object,
-            maintainAspectRatio: false,  // 禁用保持宽高比，允许自适应
-            responsive: true, // 得有这句，不然不会自适应
+            default: () => ({
+                maintainAspectRatio: false,  // 禁用保持宽高比，允许自适应
+                responsive: true, // 得有这句，不然不会自适应
+                scales: {
+                    x: {
+                        type: 'time', // 因为这句话的存在，所以不能删除 chartjs-adapter-date-fns，而原始时间戳也会被转换成日期格式，需要 dayjs 使用 parsed.x 来格式化！
+                        time: {
+                            unit: 'hour',
+                            displayFormats: {
+                                hour: 'HH:mm'
+                            }
+                        },
+                        ticks: {
+                            source: 'auto',
+                            callback: function(value) {
+                                return dayjs(value).format('HH:mm');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: { // 对于每个数据点的提示
+                        callbacks: {
+                            title: function(context) {
+                                return dayjs(context[0].parsed.x).format('HH:mm:ss') // parsed 表示已经被 Chartjs 解析过的数据
+                            }
+                        }
+                    },
+                        legend: { // 图例
+                            display: false
+                        },
+                        title: { // 标题
+                            display: true,
+                            text: '人数变化趋势'
+                        },
+                    },
+            })
         }
     },
     watch: {
-    // 监听 chartData 或 chartOptions 的变化，并手动触发更新
     chartData(newValue, oldValue) {
       if (newValue !== oldValue && this.$refs.chart) {
         this.$nextTick(() => {
@@ -61,6 +104,6 @@ ChartJS.register(
         })
       }
     }
-  }
+  },
   }
   </script>

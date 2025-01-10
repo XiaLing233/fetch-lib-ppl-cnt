@@ -73,7 +73,7 @@ export default {
                         // skyblue
                         backgroundColor: 'rgba(2, 159, 253, 0.0)',
                         borderColor: 'rgba(2, 159, 253, 1)', // 默认是啥都无所谓
-                        fill: true, // 是否填充区域
+                        // fill: true, // 是否填充区域
                         pointStyle: false, // 设置为 false，隐藏散点
                         tension: 0.4, // 线条的平滑度
                         data: [],
@@ -109,7 +109,7 @@ export default {
             data[
                 {
                     "lib_ppl_cur": "当前人数",
-                    "time": "某一天的时间" # 形如 "10:23"
+                    "time": "某一天的时间" # 形如 "2024-05-20 12:00:00"
                 }
             ]
             lib_ppl_max: "最大人数"
@@ -122,8 +122,8 @@ export default {
                 timestamp: this.selectedDate.format('YYYY-MM-DD'),
             };
             // console.log(req_data);
-            fetch('/api/get-lib-ppl', {
-            // fetch('/api/get-lib-ppl', {
+            fetch('https://lib.xialing.icu/api/get-lib-ppl', { // 调试时用这个
+            // fetch('/api/get-lib-ppl', { // 打包时用这个
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,14 +146,33 @@ export default {
                                     return value < this.libPplMax ? 'rgba(2, 159, 253, 0.4)' : 'rgba(255, 0, 0, 0.4)';
                                 },
                                 segment: {
-                                    borderColor: (context) => {
+                                    borderColor: (context) => { // 边框颜色
                                         const value = context.p1.parsed.y;
+                                        // 获取相邻两点的时间值
+                                        const time1 = new Date(context.p0.parsed.x);
+                                        const time2 = new Date(context.p1.parsed.x);
+                                        // 计算时间差（毫秒）
+                                        const timeDiff = Math.abs(time2 - time1);
+                                        
+                                        // 如果时间差大于1小时（3600000毫秒）
+                                        if (timeDiff > 3600000) {
+                                            return 'rgba(128, 128, 128, 0.5)'; // 灰色半透明
+                                        }
+
                                         return value < this.libPplMax ? 'rgba(2, 159, 253, 1)' : 'rgba(255, 0, 0, 1)';
-                                    }
+                                    },
+                                    borderDash: (context) => { // 虚线显示
+                                        const time1 = new Date(context.p0.parsed.x);
+                                        const time2 = new Date(context.p1.parsed.x);
+                                        const timeDiff = Math.abs(time2 - time1);
+                                        
+                                        // 时间差大于1小时时使用虚线
+                                        return timeDiff > 3600000 ? [5, 5] : [];
+                                    },
                                 },
                                 data: data.data.map((item) => item.lib_ppl_cur),
                                 pointStyle: false, // 设置为 false，隐藏散点
-                                fill: true, // 是否填充区域
+                                // fill: true, // 是否填充区域
                                 tension: 0.4 // 线条的平滑度
                             }]
                         };
