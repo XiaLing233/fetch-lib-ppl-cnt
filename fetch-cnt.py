@@ -7,13 +7,14 @@ import pytz # 时区
 import mysql.connector # 数据库连接
 import configparser # 读取配置文件
 import logging # 日志
+from logging.handlers import TimedRotatingFileHandler # 每天生成一个日志文件
 import os
 from datetime import datetime
 
 # 读取配置文件
 # 还是开全局变量更安全一些，C 语言的习惯
 CONFIG = configparser.ConfigParser()
-CONFIG.read('config.ini')
+CONFIG.read('config.ini', encoding='utf-8')
 
 # 设置数据库连接
 DB_HOST = CONFIG['database']['host']
@@ -61,15 +62,21 @@ def setup_logger():
     logger.setLevel(logging.INFO)
     
     # 日常日志文件
-    daily_handler = logging.FileHandler(
-        f'{INFO_ADDR}{datetime.now().strftime("%Y-%m-%d")}.log',
+    daily_handler = TimedRotatingFileHandler(
+        f'{INFO_ADDR}info.log',
+        when='midnight',
+        interval=1,
+        backupCount=7,
         encoding = ENCODING
     )
     daily_handler.setLevel(logging.INFO)
     
     # 错误日志文件
-    error_handler = logging.FileHandler(
-        f'{ERROR_ADDR}{datetime.now().strftime("%Y-%m-%d")}.log',
+    error_handler = TimedRotatingFileHandler(
+        f'{ERROR_ADDR}error.log',
+        when='midnight',
+        interval=1,
+        backupCount=7,
         encoding = ENCODING
     )
     error_handler.setLevel(logging.ERROR)
@@ -82,6 +89,8 @@ def setup_logger():
     logger.addHandler(daily_handler)
     logger.addHandler(error_handler)
     return logger
+
+LOGGER = setup_logger()
 
 # 向网页发送请求
 def fetch_data():
@@ -146,7 +155,7 @@ def parse_data(html):
     return lib_data
 
 # 存储数据
-def store_data(lib_data, logger=setup_logger()): # 每次都需要重新设置 logger，因为日期可能会变
+def store_data(lib_data): # 每次都需要重新设置 logger，因为日期可能会变
     # 如果 lib_data 为空，则不存储
     if not lib_data:
         return
@@ -176,7 +185,7 @@ def store_data(lib_data, logger=setup_logger()): # 每次都需要重新设置 l
     for data in lib_data:
         log_msg += f"{data['lib_name']}: {data['ppl_cnt']}/{data['max_cnt']}\n"
     log_msg += "\n"
-    logger.info(log_msg)
+    LOGGER.info(log_msg)
 
     # 关闭数据库
     cursor.close()

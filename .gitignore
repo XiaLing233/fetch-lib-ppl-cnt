@@ -4,3 +4,5 @@
 logs/
 errors/
 __pycache__/
+server_config/
+node_modules
