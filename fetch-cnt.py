@@ -99,7 +99,7 @@ def fetch_data():
         r.raise_for_status()
         return r.text
     except requests.RequestException as e: # 如果没成功的话，没关系，反正几分钟后还会再请求
-        print(e)
+        LOGGER.error(f"请求失败：{e}")
         return None
     
 # 解析网页
@@ -161,8 +161,12 @@ def store_data(lib_data): # 每次都需要重新设置 logger，因为日期可
         return
     
     # 连接数据库
-    db = mysql.connector.connect(**DB_CONFIG)
-    cursor = db.cursor()
+    try:
+        db = mysql.connector.connect(**DB_CONFIG)
+        cursor = db.cursor()
+    except mysql.connector.Error as e:
+        LOGGER.error(f"连接数据库失败：{e}")
+        return
 
     # 获取当前时间
     now = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -225,7 +229,11 @@ def main():
         # print(html)
 
         if html:
-            lib_data = parse_data(html)
+            try:
+                lib_data = parse_data(html)
+            except Exception as e:
+                LOGGER.error(f"解析数据失败：{e}")
+                continue
 
             # print("request success")
 
