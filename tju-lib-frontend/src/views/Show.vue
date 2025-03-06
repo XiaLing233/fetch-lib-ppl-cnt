@@ -122,8 +122,7 @@ export default {
                 timestamp: this.selectedDate.format('YYYY-MM-DD'),
             };
             // console.log(req_data);
-            fetch('https://lib.xialing.icu/api/get-lib-ppl', { // 调试时用这个
-            // fetch('/api/get-lib-ppl', { // 打包时用这个
+            fetch('/api/get-lib-ppl', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

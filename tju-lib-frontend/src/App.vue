@@ -32,7 +32,6 @@
     </a-layout>
     <a-layout-footer class="footer">
           <p>鸣谢：同济大学</p>
-          <p>更新时间：2025-01-10</p>
           <p>{{ new Date().getFullYear() }} — <strong>夏凌</strong></p>
     </a-layout-footer>
   </a-layout>
