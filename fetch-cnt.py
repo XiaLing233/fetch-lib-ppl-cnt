@@ -98,9 +98,9 @@ def fetch_data():
         r = requests.get(REQUSET_URL)
         r.raise_for_status()
         return r.text
-    except requests.RequestException as e: # 如果没成功的话，没关系，反正几分钟后还会再请求
+    except Exception as e: # 如果没成功的话，没关系，反正几分钟后还会再请求
         LOGGER.error(f"请求失败：{e}")
-        return None
+        raise e
     
 # 解析网页
 def parse_data(html):
@@ -111,7 +111,7 @@ def parse_data(html):
 
     if not target_div:
         print('未找到目标 div 标签')
-        return None
+        raise Exception('未找到目标 div 标签')
     
     divs = target_div.find_all('div') # 找到所有的 div 标签，每个 div 包含的 section 代表一个图书馆
     # 就很烦，每个 section 是嵌入在 div 里的，所以要先找到 div，再找到 section
@@ -165,8 +165,9 @@ def store_data(lib_data): # 每次都需要重新设置 logger，因为日期可
         db = mysql.connector.connect(**DB_CONFIG)
         cursor = db.cursor()
     except mysql.connector.Error as e:
-        LOGGER.error(f"连接数据库失败：{e}")
-        return
+        raise Exception(f"数据库连接失败：{e}")
+    except Exception as e:
+        raise Exception(f"其他错误：{e}")
 
     # 获取当前时间
     now = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -185,7 +186,7 @@ def store_data(lib_data): # 每次都需要重新设置 logger，因为日期可
     db.commit()
 
     # 记录日志
-    log_msg = now + '\n' # 记录一下时间，系统时间可能和这个时间有一点点误差
+    log_msg = ''
     for data in lib_data:
         log_msg += f"{data['lib_name']}: {data['ppl_cnt']}/{data['max_cnt']}\n"
     log_msg += "\n"
@@ -223,27 +224,27 @@ def set_interval():
 # 主函数
 def main():
     while True: # 保持运行
-        html = fetch_data()
+        try:
+            html = fetch_data()
+        except Exception as e:
+            LOGGER.error(f"请求数据失败：{e}")
+            continue
 
-        # print("got html")
-        # print(html)
+        try:
+            lib_data = parse_data(html)
+        except Exception as e:
+            LOGGER.error(f"解析数据失败：{e}")
+            LOGGER.error(f"HTML 内容：{html}")
+            continue
 
-        if html:
-            try:
-                lib_data = parse_data(html)
-            except Exception as e:
-                LOGGER.error(f"解析数据失败：{e}")
-                continue
+        # 调试
+        print(lib_data)
 
-            # print("request success")
-
-            # 调试
-            print(lib_data)
-
+        try:
             store_data(lib_data)
-
-        else:
-            print("request failed")
+        except Exception as e:
+            LOGGER.error(f"存储数据失败：{e}")
+            continue
      
         # 设置间歇
         interval = set_interval()
