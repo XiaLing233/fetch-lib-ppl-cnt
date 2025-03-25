@@ -95,7 +95,10 @@ LOGGER = setup_logger()
 # 向网页发送请求
 def fetch_data():
     try:
-        r = requests.get(REQUSET_URL)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; xlbot/1.0; +https://lib.xialing.icu) Chrome/116.0.1938.76 Safari/537.36',
+        }
+        r = requests.get(REQUSET_URL, headers=headers)
         r.raise_for_status()
         return r.text
     except Exception as e: # 如果没成功的话，没关系，反正几分钟后还会再请求
@@ -224,6 +227,7 @@ def set_interval():
 # 主函数
 def main():
     while True: # 保持运行
+        html = None
         try:
             html = fetch_data()
         except Exception as e:
